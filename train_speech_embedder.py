@@ -15,6 +15,7 @@ from torch.utils.data import DataLoader
 from hparam import hparam as hp
 from data_load import SpeakerDatasetTIMIT, SpeakerDatasetTIMITPreprocessed
 from speech_embedder_net import SpeechEmbedder, GE2ELoss, get_centroids, get_cossim
+from tqdm import tqdm
 
 def train(model_path):
     device = torch.device(hp.device)
@@ -41,7 +42,7 @@ def train(model_path):
     iteration = 0
     for e in range(hp.train.epochs):
         total_loss = 0
-        for batch_id, mel_db_batch in enumerate(train_loader): 
+        for batch_id, mel_db_batch in tqdm(enumerate(train_loader)): 
             mel_db_batch = mel_db_batch.to(device)
             
             mel_db_batch = torch.reshape(mel_db_batch, (hp.train.N*hp.train.M, mel_db_batch.size(2), mel_db_batch.size(3)))
