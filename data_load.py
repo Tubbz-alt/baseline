@@ -72,10 +72,9 @@ class SpeakerDatasetTIMITPreprocessed(Dataset):
         else:
             selected_file = np_file_list[idx]               
         
-        print(os.path.join(self.path, selected_file))
+
         utters = np.load(os.path.join(self.path, selected_file))        # load utterance spectrogram of selected speaker
         if self.shuffle:
-            print(utters.shape)
             utter_index = np.random.randint(0, utters.shape[0], self.utter_num)   # select M utterances per speaker
             utterance = utters[utter_index]       
         else:
