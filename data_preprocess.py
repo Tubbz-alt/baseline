@@ -6,6 +6,7 @@ import os
 import librosa
 import numpy as np
 from hparam import hparam as hp
+import subprocess
 
 # downloaded dataset path
 audio_path = glob.glob(os.path.dirname(hp.unprocessed_data))                                        
@@ -31,6 +32,7 @@ def save_spectrogram_tisv():
         for utter_name in os.listdir(folder):
             if utter_name[-4:] == '.WAV':
                 utter_path = os.path.join(folder, utter_name)         # path of each utterance
+                subprocess.call(['sox', utter_path, '-b', '16', utter_path, 'rate', '16k'])
                 utter, sr = librosa.core.load(utter_path, hp.data.sr)        # load utterance audio
                 intervals = librosa.effects.split(utter, top_db=30)         # voice activity detection
                 for interval in intervals:
