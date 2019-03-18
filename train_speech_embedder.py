@@ -23,11 +23,11 @@ def train(model_path):
     device = torch.device(hp.device)
     
     if hp.data.data_preprocessed:
-        train_dataset = SpeakerDatasetTIMITPreprocessed()
-        test_dataset = SpeakerDatasetTIMITPreprocessed()
+        train_dataset = SpeakerDatasetTIMITPreprocessed(is_training=True)
+        test_dataset = SpeakerDatasetTIMITPreprocessed(is_training=False)
     else:
-        train_dataset = SpeakerDatasetTIMIT()
-        test_dataset = SpeakerDatasetTIMIT()
+        train_dataset = SpeakerDatasetTIMIT(is_training=True)
+        test_dataset = SpeakerDatasetTIMIT(is_training=False)
     train_loader = DataLoader(train_dataset, batch_size=hp.train.N, shuffle=True, num_workers=hp.train.num_workers, drop_last=True) 
     test_loader = DataLoader(test_dataset, batch_size=hp.test.N, shuffle=True, num_workers=hp.test.num_workers, drop_last=True)
     

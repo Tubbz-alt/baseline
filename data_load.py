@@ -18,9 +18,9 @@ from utils import mfccs_and_spec
 
 class SpeakerDatasetTIMIT(Dataset):
     
-    def __init__(self):
+    def __init__(self, is_training):
 
-        if hp.training:
+        if is_training:
             self.path = hp.data.train_path_unprocessed
             self.utterance_number = hp.train.M
         else:
@@ -47,10 +47,10 @@ class SpeakerDatasetTIMIT(Dataset):
 
 class SpeakerDatasetTIMITPreprocessed(Dataset):
     
-    def __init__(self, shuffle=True, utter_start=0):
+    def __init__(self, is_training, shuffle=True, utter_start=0):
         
         # data path
-        if hp.training:
+        if is_training:
             self.path = hp.data.train_path
             self.utter_num = hp.train.M
         else:
