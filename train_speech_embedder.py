@@ -74,11 +74,11 @@ def train(model_path):
             torch.nn.utils.clip_grad_norm_(ge2e_loss.parameters(), 1.0)
             optimizer.step()
             
-            total_loss = total_loss + loss
+            total_loss = total_loss + loss.item()
             iteration += 1
 
             # Update statistics for progress bar
-            progress_bar.set_postfix(iteration=iteration, loss=loss, total_loss=total_loss/(batch_id + 1))
+            progress_bar.set_postfix(iteration=iteration, loss=loss.item(), total_loss=total_loss/(batch_id + 1))
 
                     
         # Perform validation
@@ -87,8 +87,8 @@ def train(model_path):
         for batch_id, mel_db_batch in enumerate(test_loader):
             mel_db_batch = mel_db_batch.to(device)
             
-            mel_db_batch = torch.reshape(mel_db_batch, (hp.train.N*hp.train.M, mel_db_batch.size(2), mel_db_batch.size(3)))
-            perm = random.sample(range(0, hp.train.N*hp.train.M), hp.train.N*hp.train.M)
+            mel_db_batch = torch.reshape(mel_db_batch, (hp.test.N*hp.test.M, mel_db_batch.size(2), mel_db_batch.size(3)))
+            perm = random.sample(range(0, hp.test.N*hp.test.M), hp.test.N*hp.test.M)
             unperm = list(perm)
             for i,j in enumerate(perm):
                 unperm[j] = i
