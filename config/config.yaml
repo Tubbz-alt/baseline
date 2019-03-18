@@ -3,9 +3,9 @@ device: "cuda"
 unprocessed_data: '/Users/Jimmy/timit/*/*/*/*.wav'
 ---
 data:
-    train_path: './train_tisv'
+    train_path: './train_tisv2'
     train_path_unprocessed: './TIMIT/TRAIN/*/*/*.wav'
-    test_path: './test_tisv'
+    test_path: './test_tisv2'
     test_path_unprocessed: './TIMIT/TEST/*/*/*.wav'
     data_preprocessed: !!bool "true" 
     sr: 16000
