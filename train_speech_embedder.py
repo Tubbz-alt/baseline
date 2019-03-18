@@ -35,7 +35,7 @@ def train(model_path):
     
     embedder_net = SpeechEmbedder().to(device)
     if hp.train.restore:
-        subprocess.call(['gsutil', 'cp', 'gs://edinquake/asr/baseline_TIMIT/model_best.pkl'], model_path, stdout=FNULL, stderr=subprocess.STDOUT)
+        subprocess.call(['gsutil', 'cp', 'gs://edinquake/asr/baseline_TIMIT/model_best.pkl', model_path], stdout=FNULL, stderr=subprocess.STDOUT)
         embedder_net.load_state_dict(torch.load(model_path))
     ge2e_loss = GE2ELoss(device)
     #Both net and loss have trainable parameters
