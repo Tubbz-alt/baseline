@@ -48,7 +48,7 @@ def train(model_path):
     print('***Started training at {}***'.format(datetime.now()))
     for e in range(hp.train.epochs):
         total_loss = 0
-        progress_bar = tqdm(train_loader, desc='| Epoch {:03d}'.format(epoch), leave=False, disable=False)
+        progress_bar = tqdm(train_loader, desc='| Epoch {:03d}'.format(e), leave=False, disable=False)
         embedder_net.train()
         # Iterate over the training set
         for batch_id, mel_db_batch in enumerate(progress_bar): 
