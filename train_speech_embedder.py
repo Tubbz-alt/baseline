@@ -19,7 +19,9 @@ from tqdm import tqdm
 from datetime import datetime
 import subprocess
 
+
 def train(model_path):
+    FNULL = open(os.devnull, 'w')
     device = torch.device(hp.device)
     
     if hp.data.data_preprocessed:
@@ -102,13 +104,14 @@ def train(model_path):
             validation_loss += loss.item()
 
         validation_loss /= len(test_loader)
+        print('validation_loss: {}'.format(validation_loss))
         if validation_loss <= best_validate:
             best_validate = validation_loss
             # Save best
             filename = 'model_best.pkl'
             ckpt_model_path = os.path.join(hp.train.checkpoint_dir, filename)
             torch.save(embedder_net.state_dict(), ckpt_model_path)
-            subprocess.call(['gsutil', 'cp', ckpt_model_path, 'gs://edinquake/asr/baseline_TIMIT/model_best.pkl'])
+            subprocess.call(['gsutil', 'cp', ckpt_model_path, 'gs://edinquake/asr/baseline_TIMIT/model_best.pkl'], stdout=FNULL, stderr=subprocess.STDOUT)
         
         filename = 'model_last.pkl'
         ckpt_model_path = os.path.join(hp.train.checkpoint_dir, filename)
