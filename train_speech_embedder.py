@@ -82,7 +82,7 @@ def train(model_path):
             # Update statistics for progress bar
             progress_bar.set_postfix(iteration=iteration, loss=loss.item(), total_loss=total_loss/(batch_id + 1))
 
-                    
+        print('| Epoch {:03d}: total_loss {}'.format(e, total_loss))
         # Perform validation
         embedder_net.eval()
         validation_loss = 0
