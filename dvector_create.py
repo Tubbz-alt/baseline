@@ -19,7 +19,7 @@ import torch
 from hparam import hparam as hp
 from speech_embedder_net import SpeechEmbedder
 from VAD_segments import VAD_chunk
-
+import subprocess
 
 def concat_segs(times, segs):
     #Concatenate continuous voiced segments
@@ -78,13 +78,15 @@ total_speaker_num = len(audio_path)
 train_speaker_num= (total_speaker_num//10)*9            # split total data 90% train and 10% test
 
 embedder_net = SpeechEmbedder()
+FNULL = open(os.devnull, 'w')
+subprocess.call(['gsutil', 'cp', 'gs://edinquake/asr/baseline_TIMIT/model_best.pkl', hp.model.model_path], stdout=FNULL, stderr=subprocess.STDOUT)
 embedder_net.load_state_dict(torch.load(hp.model.model_path))
 embedder_net.eval()
 
 train_sequence = []
 train_cluster_id = []
 label = 0
-count = 0
+count = 0 
 train_saved = False
 for i, folder in enumerate(audio_path):
     for file in os.listdir(folder):
