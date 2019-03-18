@@ -16,15 +16,20 @@ from hparam import hparam as hp
 from data_load import SpeakerDatasetTIMIT, SpeakerDatasetTIMITPreprocessed
 from speech_embedder_net import SpeechEmbedder, GE2ELoss, get_centroids, get_cossim
 from tqdm import tqdm
+from datetime import datetime
+import subprocess
 
 def train(model_path):
     device = torch.device(hp.device)
     
     if hp.data.data_preprocessed:
         train_dataset = SpeakerDatasetTIMITPreprocessed()
+        test_dataset = SpeakerDatasetTIMITPreprocessed()
     else:
         train_dataset = SpeakerDatasetTIMIT()
+        test_dataset = SpeakerDatasetTIMIT()
     train_loader = DataLoader(train_dataset, batch_size=hp.train.N, shuffle=True, num_workers=hp.train.num_workers, drop_last=True) 
+    test_loader = DataLoader(test_dataset, batch_size=hp.test.N, shuffle=True, num_workers=hp.test.num_workers, drop_last=True)
     
     embedder_net = SpeechEmbedder().to(device)
     if hp.train.restore:
@@ -37,12 +42,16 @@ def train(model_path):
                 ], lr=hp.train.lr)
     
     os.makedirs(hp.train.checkpoint_dir, exist_ok=True)
-    
-    embedder_net.train()
+       
     iteration = 0
+    best_validate = float('inf')
+    print('***Started training at {}***'.format(datetime.now()))
     for e in range(hp.train.epochs):
         total_loss = 0
-        for batch_id, mel_db_batch in tqdm(enumerate(train_loader), total=len(train_loader)): 
+        progress_bar = tqdm(train_loader, desc='| Epoch {:03d}'.format(epoch), leave=False, disable=False)
+        embedder_net.train()
+        # Iterate over the training set
+        for batch_id, mel_db_batch in enumerate(progress_bar): 
             mel_db_batch = mel_db_batch.to(device)
             
             mel_db_batch = torch.reshape(mel_db_batch, (hp.train.N*hp.train.M, mel_db_batch.size(2), mel_db_batch.size(3)))
@@ -67,28 +76,44 @@ def train(model_path):
             
             total_loss = total_loss + loss
             iteration += 1
-            if (batch_id + 1) % hp.train.log_interval == 0:
-                mesg = "{0}\tEpoch:{1}[{2}/{3}],Iteration:{4}\tLoss:{5:.4f}\tTLoss:{6:.4f}\t\n".format(time.ctime(), e+1,
-                        batch_id+1, len(train_dataset)//hp.train.N, iteration,loss, total_loss / (batch_id + 1))
-                print(mesg)
-                if hp.train.log_file is not None:
-                    with open(hp.train.log_file,'a') as f:
-                        f.write(mesg)
-                    
-        if hp.train.checkpoint_dir is not None and (e + 1) % hp.train.checkpoint_interval == 0:
-            embedder_net.eval().cpu()
-            ckpt_model_filename = "ckpt_epoch_" + str(e+1) + "_batch_id_" + str(batch_id+1) + ".pth"
-            ckpt_model_path = os.path.join(hp.train.checkpoint_dir, ckpt_model_filename)
-            torch.save(embedder_net.state_dict(), ckpt_model_path)
-            embedder_net.to(device).train()
 
-    #save model
-    embedder_net.eval().cpu()
-    save_model_filename = "final_epoch_" + str(e + 1) + "_batch_id_" + str(batch_id + 1) + ".model"
-    save_model_path = os.path.join(hp.train.checkpoint_dir, save_model_filename)
-    torch.save(embedder_net.state_dict(), save_model_path)
-    
-    print("\nDone, trained model saved at", save_model_path)
+            # Update statistics for progress bar
+            progress_bar.set_postfix(iteration=iteration, loss=loss, total_loss=total_loss/(batch_id + 1))
+
+                    
+        # Perform validation
+        embedder_net.eval()
+        validation_loss = 0
+        for batch_id, mel_db_batch in enumerate(test_loader):
+            mel_db_batch = mel_db_batch.to(device)
+            
+            mel_db_batch = torch.reshape(mel_db_batch, (hp.train.N*hp.train.M, mel_db_batch.size(2), mel_db_batch.size(3)))
+            perm = random.sample(range(0, hp.train.N*hp.train.M), hp.train.N*hp.train.M)
+            unperm = list(perm)
+            for i,j in enumerate(perm):
+                unperm[j] = i
+            mel_db_batch = mel_db_batch[perm]
+                        
+            embeddings = embedder_net(mel_db_batch)
+            embeddings = embeddings[unperm]
+            embeddings = torch.reshape(embeddings, (hp.test.N, hp.test.M, embeddings.size(1)))
+            #get loss
+            loss = ge2e_loss(embeddings) #wants (Speaker, Utterances, embedding)
+            validation_loss += loss.item()
+
+        validation_loss /= len(test_loader)
+        if validation_loss <= best_validate:
+            best_validate = validation_loss
+            # Save best
+            filename = 'model_best.pkl'
+            ckpt_model_path = os.path.join(hp.train.checkpoint_dir, filename)
+            torch.save(embedder_net.state_dict(), ckpt_model_path)
+            subprocess.call(['gsutil', 'cp', ckpt_model_path, 'gs://edinquake/asr/baseline_TIMIT/model_best.pkl'])
+        
+        filename = 'model_last.pkl'
+        ckpt_model_path = os.path.join(hp.train.checkpoint_dir, filename)
+        torch.save(embedder_net.state_dict(), ckpt_model_path)
+
 
 def test(model_path):
     
