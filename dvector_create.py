@@ -9,7 +9,7 @@ Creates "segment level d vector embeddings" compatible with
 https://github.com/google/uis-rnn
 
 """
-
+from torch.serialization import default_restore_location
 import glob
 import librosa
 import numpy as np
@@ -72,7 +72,12 @@ def align_embeddings(embeddings):
         avg_embeddings[i] = np.average(embeddings[partition[0]:partition[1]],axis=0) 
     return avg_embeddings
 #dataset path
-audio_path = glob.glob(os.path.dirname(hp.unprocessed_data))  
+
+# For ASR19_ALL
+unprocessed_data: '../ASR19_ALL/*/*.wav'
+audio_path = glob.glob(os.path.dirname(unprocessed_data))  
+# For TIMIT
+# audio_path = glob.glob(os.path.dirname(hp.unprocessed_data))  
 
 total_speaker_num = len(audio_path)
 train_speaker_num= (total_speaker_num//10)*9            # split total data 90% train and 10% test
@@ -80,7 +85,7 @@ train_speaker_num= (total_speaker_num//10)*9            # split total data 90% t
 embedder_net = SpeechEmbedder()
 FNULL = open(os.devnull, 'w')
 subprocess.call(['gsutil', 'cp', 'gs://edinquake/asr/baseline_TIMIT/model_best.pkl', hp.model.model_path], stdout=FNULL, stderr=subprocess.STDOUT)
-embedder_net.load_state_dict(torch.load(hp.model.model_path))
+embedder_net.load_state_dict(torch.load(hp.model.model_path, map_location=lambda s, l: default_restore_location(s, 'cpu')))
 embedder_net.eval()
 
 train_sequence = []
@@ -95,10 +100,12 @@ for i, folder in enumerate(audio_path):
             if segs == []:
                 print('No voice activity detected')
                 continue
+            
             concat_seg = concat_segs(times, segs)
             STFT_frames = get_STFTs(concat_seg)
             STFT_frames = np.stack(STFT_frames, axis=2)
             STFT_frames = torch.tensor(np.transpose(STFT_frames, axes=(2,1,0)))
+
             embeddings = embedder_net(STFT_frames)
             aligned_embeddings = align_embeddings(embeddings.detach().numpy())
             train_sequence.append(aligned_embeddings)
@@ -110,6 +117,8 @@ for i, folder in enumerate(audio_path):
     label = label + 1
     
     if not train_saved and i > train_speaker_num:
+        continue
+        
         train_sequence = np.concatenate(train_sequence,axis=0)
         train_cluster_id = np.asarray(train_cluster_id)
         np.save('train_sequence',train_sequence)
