@@ -94,6 +94,8 @@ label = 0
 count = 0 
 train_saved = False
 for i, folder in enumerate(audio_path):
+    if not os.path.isdir(folder):
+        continue
     for file in os.listdir(folder):
         if file[-4:] == '.wav':
             times, segs = VAD_chunk(2, folder+'/'+file)
