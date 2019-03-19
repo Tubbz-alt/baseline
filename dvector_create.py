@@ -74,7 +74,7 @@ def align_embeddings(embeddings):
 #dataset path
 
 # For ASR19_ALL
-unprocessed_data: '../ASR19_ALL/*/*.wav'
+unprocessed_data = '../ASR19_ALL/*/*.wav'
 audio_path = glob.glob(os.path.dirname(unprocessed_data))  
 # For TIMIT
 # audio_path = glob.glob(os.path.dirname(hp.unprocessed_data))  
@@ -118,7 +118,7 @@ for i, folder in enumerate(audio_path):
     
     if not train_saved and i > train_speaker_num:
         continue
-        
+
         train_sequence = np.concatenate(train_sequence,axis=0)
         train_cluster_id = np.asarray(train_cluster_id)
         np.save('train_sequence',train_sequence)
