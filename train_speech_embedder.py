@@ -127,6 +127,7 @@ def test(model_path):
         test_dataset = SpeakerDatasetTIMIT()
     test_loader = DataLoader(test_dataset, batch_size=hp.test.N, shuffle=True, num_workers=hp.test.num_workers, drop_last=True)
     
+    subprocess.call(['gsutil', 'cp', 'gs://edinquake/asr/baseline_TIMIT/model_best.pkl', model_path], stdout=FNULL, stderr=subprocess.STDOUT)
     embedder_net = SpeechEmbedder()
     embedder_net.load_state_dict(torch.load(model_path))
     embedder_net.eval()
@@ -184,7 +185,7 @@ def test(model_path):
     print("\n EER across {0} epochs: {1:.4f}".format(hp.test.epochs, avg_EER))
         
 if __name__=="__main__":
-    if hp.training:
+    if not hp.training:
         train(hp.model.model_path)
     else:
         test(hp.model.model_path)
