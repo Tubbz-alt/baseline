@@ -122,9 +122,9 @@ def train(model_path):
 def test(model_path):
     
     if hp.data.data_preprocessed:
-        test_dataset = SpeakerDatasetTIMITPreprocessed()
+        test_dataset = SpeakerDatasetTIMITPreprocessed(is_training=False)
     else:
-        test_dataset = SpeakerDatasetTIMIT()
+        test_dataset = SpeakerDatasetTIMIT(is_training=False)
     test_loader = DataLoader(test_dataset, batch_size=hp.test.N, shuffle=True, num_workers=hp.test.num_workers, drop_last=True)
     
     subprocess.call(['gsutil', 'cp', 'gs://edinquake/asr/baseline_TIMIT/model_best.pkl', model_path], stdout=FNULL, stderr=subprocess.STDOUT)
