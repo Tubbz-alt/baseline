@@ -1,6 +1,6 @@
 training: !!bool "true"
 device: "cuda"
-unprocessed_data: '/Users/Jimmy/timit/*/*/*/*.wav'
+unprocessed_data: 'wtf_timit/*/*/*/*.wav'
 ---
 data:
     train_path: './train_tisv2'
@@ -35,6 +35,6 @@ train:
 ---
 test:
     N : 4 #Number of speakers in batch
-    M : 3 #Number of utterances per speaker
+    M : 4 #Number of utterances per speaker
     num_workers: 8 #number of workers for data laoder
     epochs: 10 #testing speaker epochs
